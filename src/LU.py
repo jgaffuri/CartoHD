@@ -61,5 +61,6 @@ bounds = "([83000, 84500],[79000, 80500])"
 output_folder = "/tmp/lu/tiff/" + str(xmin) + "_" + str(ymin) + "/"
 os.makedirs(output_folder, exist_ok=True)
 
+# launch process
 cartoHDprocess(input_lidar_data, output_folder, bounds = bounds, case="LU")
 
