@@ -1,3 +1,7 @@
+from cartoHD import run_command, cartoHDprocess
+import os
+
+
 '''
 https://data.public.lu/fr/datasets/lidar-2024-releve-3d-du-territoire-luxembourgeois/#/resources
 
@@ -24,7 +28,6 @@ Coordonnée Y gauche-bas : 79000
 https://download.data.public.lu/resources/bd-l-lidar2024-releve-3d-du-territoire-luxembourgeois/20241129-132527/lidar2024-c001-r030.zip
 
 
-folder = "/tmp/lu/input/"
 
 "/home/juju/geodata/lidar/lu/lidar2024-ta.gpkg"
 
@@ -43,4 +46,20 @@ for each tile:
 do web tiling of all tiffs
 
 '''
+
+
+
+
+input_lidar_data = "/tmp/lu/input/"
+os.makedirs(input_lidar_data, exist_ok=True)
+
+#xmin xmax ymin ymax
+xmin = 83000
+ymin = 79000
+size = 1500
+bounds = "([83000, 84500],[79000, 80500])"
+output_folder = "/tmp/lu/tiff/" + str(xmin) + "_" + str(ymin) + "/"
+os.makedirs(output_folder, exist_ok=True)
+
+cartoHDprocess(input_lidar_data, output_folder, bounds = bounds, case="LU")
 
