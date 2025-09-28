@@ -312,7 +312,7 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
         # create base pdal config, to be completed for various cases
         data = [
     {
-        "type": "readers.las",
+        "type": "readers.laz",
         "filename": input_lidar_data
     }]
         if bounds: data.append({
