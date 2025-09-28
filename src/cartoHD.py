@@ -307,7 +307,6 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
     #if with_pdal_pipeline: run_command(["conda", "activate", "pdal"])
 
 
-
     def get_base_config():
         # create base pdal config, to be completed for various cases
         data = [

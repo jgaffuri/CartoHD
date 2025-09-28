@@ -51,7 +51,7 @@ do web tiling of all tiffs
 
 tmp = "/home/juju/workspace/CartoHD/tmp/lu/"
 
-input_lidar_data = tmp + "input/"
+input_lidar_data = tmp + "input/*.laz"
 os.makedirs(input_lidar_data, exist_ok=True)
 
 #xmin xmax ymin ymax
