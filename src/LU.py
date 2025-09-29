@@ -54,12 +54,19 @@ tmp = "/home/juju/workspace/CartoHD/tmp/lu/"
 # set tile bounds
 #xmin xmax ymin ymax
 xmin = 83000, ymin = 79000, size = 1500
-bounds = "(["+str(xmin)+", "+str(xmin+size)+"],["+str(ymin)+", "+str(ymin+size)+"])"
 
-# make output folder
-output_folder = tmp + "tiff/" + str(xmin) + "_" + str(ymin) + "/"
-os.makedirs(output_folder, exist_ok=True)
+# output folder
+output_folder = tmp + "output/" + str(xmin) + "_" + str(ymin) + "/"
 
-# launch process
-cartoHDprocess(tmp + "input/*.laz", output_folder, bounds = bounds, case="LU")
+if not os.path.exists(output_folder):
+    print("Processing tile", xmin, ymin)
 
+    # make output folder
+    os.makedirs(output_folder, exist_ok=True)
+
+    # launch process
+    bounds = "(["+str(xmin)+", "+str(xmin+size)+"],["+str(ymin)+", "+str(ymin+size)+"])"
+    cartoHDprocess(tmp + "input/*.laz", output_folder, bounds = bounds, case="LU")
+
+    print("copy QGIS project file")
+    run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
