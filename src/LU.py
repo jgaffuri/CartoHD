@@ -6,6 +6,7 @@ import shutil
 import requests
 import zipfile
 from urllib.parse import urlparse
+from datetime import datetime
 
 
 '''
@@ -150,7 +151,7 @@ ymax = 140000
 tile_size = 5000
 for x in range(xmin, xmax, tile_size):
     for y in range(ymin, ymax, tile_size):
-        print("process tile", x, y)
+        print(datetime.now(), "process tile", x, y)
         process_tile(x, y, tile_size, tmp_folder)
 
 
