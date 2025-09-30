@@ -47,22 +47,35 @@ do web tiling of all tiffs
 
 '''
 
+ta = "/home/juju/geodata/lidar/lu/lidar2024-ta.gpkg"
+
+'''
+Fichier
+Dossier
+DownloadLink
+83500_82500
+Lidar2024_C024_R018
+https://data.public.lu/fr/datasets/r/a1b312e3-ed02-4a27-bb73-5276417d8a7a
+'''
+
 
 
 tmp = "/home/juju/workspace/CartoHD/tmp/lu/"
 
 # set tile bounds
 #xmin xmax ymin ymax
-xmin = 83000, ymin = 79000, size = 1500
+xmin = 83000; ymin = 79000; size = 1500
 
 # output folder
 output_folder = tmp + "output/" + str(xmin) + "_" + str(ymin) + "/"
 os.makedirs(output_folder, exist_ok=True)
 
+# Process PDAL tile
 if not os.path.exists(output_folder + "dsm.tif"):
-    print("Processing tile", xmin, ymin)
+    print("Processing PDAL tile", xmin, ymin)
     bounds = "(["+str(xmin)+", "+str(xmin+size)+"],["+str(ymin)+", "+str(ymin+size)+"])"
     cartoHDprocess(tmp + "input/*.laz", output_folder, bounds = bounds, case="LU")
 
-run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
-
+# copy project
+if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
+    run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
