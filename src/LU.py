@@ -1,5 +1,6 @@
 from cartoHD import run_command, cartoHDprocess
 import os
+import geopandas as gpd
 
 
 '''
@@ -48,6 +49,11 @@ do web tiling of all tiffs
 '''
 
 ta = "/home/juju/geodata/lidar/lu/lidar2024-ta.gpkg"
+df = gpd.read_file(ta)
+df = dict(zip(df['Fichier'], df['DownloadLink']))
+print(df)
+exit()
+
 
 '''
 Fichier
