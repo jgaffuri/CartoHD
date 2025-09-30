@@ -100,7 +100,7 @@ input = tmp+"input/"
 
 # set tile bounds
 #xmin xmax ymin ymax
-xmin = 83000; ymin = 79500; size = 1500
+xmin = 83000; ymin = 79000; size = 1500
 
 # check files are there
 for x in range(xmin, xmin+size, 500):
@@ -111,6 +111,7 @@ for x in range(xmin, xmin+size, 500):
         if os.path.exists(file): continue
         print("do not exist!")
         downl_url = df[code]
+        if downl_url is None: continue
         print(downl_url)
         download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
 
