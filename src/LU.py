@@ -27,8 +27,8 @@ https://data.public.lu/fr/datasets/lidar-2024-releve-3d-du-territoire-luxembourg
 
 def download_unzip_and_cleanup(zip_url, local_folder):
     """
-    Downloads a ZIP file from a URL, unzips it, moves the contents to the parent folder,
-    and deletes the ZIP file and the empty unzipped folder.
+    Downloads a ZIP file from a URL, unzips it,
+    and deletes the ZIP file.
 
     Args:
         zip_url (str): URL of the ZIP file to download.
@@ -61,26 +61,10 @@ def download_unzip_and_cleanup(zip_url, local_folder):
 
     # The unzipped folder is the first (and only) folder in the local_folder
     # (assuming the ZIP contains a single folder)
-    unzipped_folder = None
     for item in os.listdir(local_folder):
         item_path = os.path.join(local_folder, item)
         if os.path.isdir(item_path):
-            unzipped_folder = item_path
             break
-
-    if unzipped_folder:
-        # Move all files from the unzipped folder to the parent folder
-        for file in os.listdir(unzipped_folder):
-            src = os.path.join(unzipped_folder, file)
-            dst = os.path.join(local_folder, file)
-            shutil.move(src, dst)
-        print(f"Moved files from {os.path.basename(unzipped_folder)} to {local_folder}.")
-
-        # Delete the now-empty unzipped folder
-        os.rmdir(unzipped_folder)
-        print(f"Deleted empty folder {os.path.basename(unzipped_folder)}.")
-    else:
-        print("No unzipped folder found.")
 
 
 
@@ -100,22 +84,16 @@ input = tmp+"input/"
 
 # set tile bounds
 #xmin xmax ymin ymax
-xmin = 83000; ymin = 79000; size = 1500
+xmin = 83000; ymin = 79000; size = 3000
 
 # check files are there
 for x in range(xmin, xmin+size, 500):
     for y in range(ymin, ymin+size, 500):
         code = str(x)+"_"+str(y)
-        file = input + code + ".laz"
-        print(code)
-        if os.path.exists(file): continue
-        print("do not exist!")
+        if os.path.exists(input + code + ".laz"): continue
         downl_url = df[code]
         if downl_url is None: continue
-        print(downl_url)
         download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
-
-exit()
 
 
 # output folder
