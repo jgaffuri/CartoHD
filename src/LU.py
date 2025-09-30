@@ -97,7 +97,7 @@ input = tmp+"input/"
 
 # set tile bounds
 #xmin xmax ymin ymax
-xmin = 85000; ymin = 79000; size = 500
+xmin = 80000; ymin = 80000; size = 500
 
 # check files are there
 for x in range(xmin, xmin+size, 500):
