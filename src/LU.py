@@ -92,6 +92,7 @@ df = dict(zip(df['Fichier'], df['DownloadLink']))
 
 
 def process_tile(xmin, ymin, tile_size, folder):
+    print(datetime.now(), "process tile", xmin, ymin)
 
     input = folder+"input/"
 
@@ -113,30 +114,24 @@ def process_tile(xmin, ymin, tile_size, folder):
             download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
             found = True
 
-    if found:
+    if not found:
 
-        # output folder
-        output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
-        os.makedirs(output_folder, exist_ok=True)
+        return
 
-        # Process PDAL tile
-        if not os.path.exists(output_folder + "dsm.tif"):
-            print("Processing PDAL tile", xmin, ymin)
-            bounds = "(["+str(xmin)+", "+str(xmin+tile_size)+"],["+str(ymin)+", "+str(ymin+tile_size)+"])"
-            cartoHDprocess(folder + "input/*.laz", output_folder, bounds = bounds, case="LU")
+    # output folder
+    output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
+    os.makedirs(output_folder, exist_ok=True)
 
-        # copy project
-        if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
-            run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
+    # Process PDAL tile
+    if not os.path.exists(output_folder + "dsm.tif"):
+        print("Processing PDAL tile", xmin, ymin)
+        bounds = "(["+str(xmin)+", "+str(xmin+tile_size)+"],["+str(ymin)+", "+str(ymin+tile_size)+"])"
+        cartoHDprocess(folder + "input/*.laz", output_folder, bounds = bounds, case="LU")
 
+    # copy project
+    if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
+        run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
 
-
-
-
-# set tile bounds
-#xmin xmax ymin ymax
-xmin = 80000; ymin = 95000; size = 5000
-tmp_folder = "/home/juju/workspace/CartoHD/tmp/lu/"
 
 
 
@@ -148,11 +143,10 @@ xmax = 110000
 ymin = 55000
 ymax = 140000
 
+# process LU tile by tile
+tmp_folder = "/home/juju/workspace/CartoHD/tmp/lu/"
 tile_size = 5000
 for x in range(xmin, xmax, tile_size):
     for y in range(ymin, ymax, tile_size):
-        print(datetime.now(), "process tile", x, y)
         process_tile(x, y, tile_size, tmp_folder)
-
-
 
