@@ -89,36 +89,69 @@ df = dict(zip(df['Fichier'], df['DownloadLink']))
 #83500_82500 : https://data.public.lu/fr/datasets/r/a1b312e3-ed02-4a27-bb73-5276417d8a7a
 
 
-#tmp/lu/input/84000_79500.laz
+
+def process_tile(xmin, ymin, tile_size, folder):
+
+    input = folder+"input/"
+
+    # check files are there
+    found = False
+    for x in range(xmin, xmin+tile_size, 500):
+        for y in range(ymin, ymin+tile_size, 500):
+            # get file code
+            code = str(x)+"_"+str(y)
+            # file already downloaded
+            if os.path.exists(input + code + ".laz"):
+                found = True
+                continue
+            # get file URL
+            downl_url = df[code]
+            # no URL: continue
+            if downl_url is None: continue
+            # download and unzip file
+            download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
+            found = True
+
+    if found:
+
+        # output folder
+        output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
+        os.makedirs(output_folder, exist_ok=True)
+
+        # Process PDAL tile
+        if not os.path.exists(output_folder + "dsm.tif"):
+            print("Processing PDAL tile", xmin, ymin)
+            bounds = "(["+str(xmin)+", "+str(xmin+tile_size)+"],["+str(ymin)+", "+str(ymin+tile_size)+"])"
+            cartoHDprocess(folder + "input/*.laz", output_folder, bounds = bounds, case="LU")
+
+        # copy project
+        if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
+            run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
 
 
-tmp = "/home/juju/workspace/CartoHD/tmp/lu/"
-input = tmp+"input/"
+
+
 
 # set tile bounds
 #xmin xmax ymin ymax
-xmin = 80000; ymin = 95000; size = 1500
-
-# check files are there
-for x in range(xmin, xmin+size, 500):
-    for y in range(ymin, ymin+size, 500):
-        code = str(x)+"_"+str(y)
-        if os.path.exists(input + code + ".laz"): continue
-        downl_url = df[code]
-        if downl_url is None: continue
-        download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
+xmin = 80000; ymin = 95000; size = 5000
+tmp_folder = "/home/juju/workspace/CartoHD/tmp/lu/"
 
 
-# output folder
-output_folder = tmp + "output/" + str(xmin) + "_" + str(ymin) + "/"
-os.makedirs(output_folder, exist_ok=True)
 
-# Process PDAL tile
-if not os.path.exists(output_folder + "dsm.tif"):
-    print("Processing PDAL tile", xmin, ymin)
-    bounds = "(["+str(xmin)+", "+str(xmin+size)+"],["+str(ymin)+", "+str(ymin+size)+"])"
-    cartoHDprocess(tmp + "input/*.laz", output_folder, bounds = bounds, case="LU")
 
-# copy project
-if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
-    run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
+
+# whole LU
+xmin = 45000
+xmax = 110000
+ymin = 55000
+ymax = 140000
+
+tile_size = 5000
+for x in range(xmin, xmax, tile_size):
+    for y in range(ymin, ymax, tile_size):
+        print("process tile", x, y)
+        process_tile(x, y, tile_size, tmp_folder)
+
+
+
