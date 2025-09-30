@@ -113,7 +113,7 @@ def process_tile(xmin, ymin, tile_size, folder):
                 found = True
                 continue
 
-            # no URL: continue
+            # no file to download for this code: continue
             if not code in df: continue
 
             # get file URL
