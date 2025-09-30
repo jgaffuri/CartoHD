@@ -95,7 +95,7 @@ def process_tile(xmin, ymin, tile_size, folder):
 
     output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
     if os.path.exists(output_folder):
-        print("output already produced")
+        print(datetime.now(), "output already produced")
         return
 
     input = folder+"input/"
@@ -124,7 +124,7 @@ def process_tile(xmin, ymin, tile_size, folder):
             found = True
 
     if not found:
-        print("No data to process")
+        print(datetime.now(), "No file to process")
         return
 
     # make output folder
@@ -136,7 +136,7 @@ def process_tile(xmin, ymin, tile_size, folder):
         bounds = "(["+str(xmin)+", "+str(xmin+tile_size)+"],["+str(ymin)+", "+str(ymin+tile_size)+"])"
         cartoHDprocess(folder + "input/*.laz", output_folder, bounds = bounds, case="LU")
 
-    # copy project
+    # copy QGIS project file
     if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
         run_command(["cp", "src/project_LU_bulk.qgz", output_folder])
 
