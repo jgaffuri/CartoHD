@@ -24,11 +24,10 @@ https://data.public.lu/fr/datasets/lidar-2024-releve-3d-du-territoire-luxembourg
 
 '''
 
-
 def download_unzip_and_cleanup(zip_url, local_folder):
     """
-    Downloads a ZIP file from a URL, unzips it,
-    and deletes the ZIP file.
+    Downloads a ZIP file from a URL, unzips it, moves the contents to the parent folder,
+    and deletes the ZIP file and the empty unzipped folder.
 
     Args:
         zip_url (str): URL of the ZIP file to download.
@@ -61,12 +60,26 @@ def download_unzip_and_cleanup(zip_url, local_folder):
 
     # The unzipped folder is the first (and only) folder in the local_folder
     # (assuming the ZIP contains a single folder)
+    unzipped_folder = None
     for item in os.listdir(local_folder):
         item_path = os.path.join(local_folder, item)
         if os.path.isdir(item_path):
+            unzipped_folder = item_path
             break
 
+    if unzipped_folder:
+        # Move all files from the unzipped folder to the parent folder
+        for file in os.listdir(unzipped_folder):
+            src = os.path.join(unzipped_folder, file)
+            dst = os.path.join(local_folder, file)
+            shutil.move(src, dst)
+        print(f"Moved files from {os.path.basename(unzipped_folder)} to {local_folder}.")
 
+        # Delete the now-empty unzipped folder
+        os.rmdir(unzipped_folder)
+        print(f"Deleted empty folder {os.path.basename(unzipped_folder)}.")
+    else:
+        print("No unzipped folder found.")
 
 
 
