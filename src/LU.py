@@ -51,19 +51,10 @@ do web tiling of all tiffs
 ta = "/home/juju/geodata/lidar/lu/lidar2024-ta.gpkg"
 df = gpd.read_file(ta)
 df = dict(zip(df['Fichier'], df['DownloadLink']))
-print(df)
-exit()
+#83500_82500 : https://data.public.lu/fr/datasets/r/a1b312e3-ed02-4a27-bb73-5276417d8a7a
 
 
-'''
-Fichier
-Dossier
-DownloadLink
-83500_82500
-Lidar2024_C024_R018
-https://data.public.lu/fr/datasets/r/a1b312e3-ed02-4a27-bb73-5276417d8a7a
-'''
-
+#tmp/lu/input/84000_79500.laz
 
 
 tmp = "/home/juju/workspace/CartoHD/tmp/lu/"
@@ -71,6 +62,14 @@ tmp = "/home/juju/workspace/CartoHD/tmp/lu/"
 # set tile bounds
 #xmin xmax ymin ymax
 xmin = 83000; ymin = 79000; size = 1500
+
+# check files are there
+for x in range(xmin, xmin+size, 500):
+    for y in range(ymin, ymin+size, 500):
+        code = str(x)+"_"+str(y)
+
+exit()
+
 
 # output folder
 output_folder = tmp + "output/" + str(xmin) + "_" + str(ymin) + "/"
