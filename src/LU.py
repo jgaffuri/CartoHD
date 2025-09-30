@@ -67,6 +67,7 @@ xmin = 83000; ymin = 79000; size = 1500
 for x in range(xmin, xmin+size, 500):
     for y in range(ymin, ymin+size, 500):
         code = str(x)+"_"+str(y)
+        print(code)
 
 exit()
 
