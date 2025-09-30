@@ -113,11 +113,11 @@ def process_tile(xmin, ymin, tile_size, folder):
                 found = True
                 continue
 
+            # no URL: continue
+            if not code in df: continue
+
             # get file URL
             downl_url = df[code]
-
-            # no URL: continue
-            if downl_url is None: continue
 
             # download and unzip file
             download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
