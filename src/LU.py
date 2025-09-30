@@ -43,7 +43,7 @@ def download_unzip_and_cleanup(zip_url, local_folder):
     zip_path = os.path.join(local_folder, zip_filename)
 
     # Download the ZIP file
-    print(f"Downloading {zip_filename}...")
+    print(datetime.now(), f"Downloading {zip_filename}...")
     response = requests.get(zip_url, stream=True)
     response.raise_for_status()
     with open(zip_path, 'wb') as f:
@@ -51,13 +51,13 @@ def download_unzip_and_cleanup(zip_url, local_folder):
             f.write(chunk)
 
     # Unzip the file
-    print(f"Unzipping {zip_filename}...")
+    #print(f"Unzipping {zip_filename}...")
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(local_folder)
 
     # Delete the ZIP file
     os.remove(zip_path)
-    print(f"Deleted {zip_filename}.")
+    #print(f"Deleted {zip_filename}.")
 
     # The unzipped folder is the first (and only) folder in the local_folder
     # (assuming the ZIP contains a single folder)
@@ -74,13 +74,12 @@ def download_unzip_and_cleanup(zip_url, local_folder):
             src = os.path.join(unzipped_folder, file)
             dst = os.path.join(local_folder, file)
             shutil.move(src, dst)
-        print(f"Moved files from {os.path.basename(unzipped_folder)} to {local_folder}.")
+        #print(f"Moved files from {os.path.basename(unzipped_folder)} to {local_folder}.")
 
         # Delete the now-empty unzipped folder
         os.rmdir(unzipped_folder)
-        print(f"Deleted empty folder {os.path.basename(unzipped_folder)}.")
-    else:
-        print("No unzipped folder found.")
+        #print(f"Deleted empty folder {os.path.basename(unzipped_folder)}.")
+    #else: print("No unzipped folder found.")
 
 
 
@@ -94,37 +93,46 @@ df = dict(zip(df['Fichier'], df['DownloadLink']))
 def process_tile(xmin, ymin, tile_size, folder):
     print(datetime.now(), "process tile", xmin, ymin)
 
+    output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
+    if os.path.exists(output_folder):
+        print("output already produced")
+        return
+
     input = folder+"input/"
 
-    # check files are there
+    # check input files
     found = False
     for x in range(xmin, xmin+tile_size, 500):
         for y in range(ymin, ymin+tile_size, 500):
+
             # get file code
             code = str(x)+"_"+str(y)
+
             # file already downloaded
             if os.path.exists(input + code + ".laz"):
                 found = True
                 continue
+
             # get file URL
             downl_url = df[code]
+
             # no URL: continue
             if downl_url is None: continue
+
             # download and unzip file
             download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
             found = True
 
     if not found:
-
+        print("No data to process")
         return
 
-    # output folder
-    output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
+    # make output folder
     os.makedirs(output_folder, exist_ok=True)
 
-    # Process PDAL tile
+    # process PDAL tile
     if not os.path.exists(output_folder + "dsm.tif"):
-        print("Processing PDAL tile", xmin, ymin)
+        print(datetime.now(), "Processing PDAL tile", xmin, ymin)
         bounds = "(["+str(xmin)+", "+str(xmin+tile_size)+"],["+str(ymin)+", "+str(ymin+tile_size)+"])"
         cartoHDprocess(folder + "input/*.laz", output_folder, bounds = bounds, case="LU")
 
