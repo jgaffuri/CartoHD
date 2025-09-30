@@ -24,6 +24,68 @@ https://data.public.lu/fr/datasets/lidar-2024-releve-3d-du-territoire-luxembourg
 
 '''
 
+
+def download_unzip_and_cleanup(zip_url, local_folder):
+    """
+    Downloads a ZIP file from a URL, unzips it, moves the contents to the parent folder,
+    and deletes the ZIP file and the empty unzipped folder.
+
+    Args:
+        zip_url (str): URL of the ZIP file to download.
+        local_folder (str): Local folder path where the ZIP will be downloaded and unzipped.
+    """
+    # Create the local folder if it doesn't exist
+    os.makedirs(local_folder, exist_ok=True)
+
+    # Extract the filename from the URL
+    parsed_url = urlparse(zip_url)
+    zip_filename = os.path.basename(parsed_url.path)
+    zip_path = os.path.join(local_folder, zip_filename)
+
+    # Download the ZIP file
+    print(f"Downloading {zip_filename}...")
+    response = requests.get(zip_url, stream=True)
+    response.raise_for_status()
+    with open(zip_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+
+    # Unzip the file
+    print(f"Unzipping {zip_filename}...")
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(local_folder)
+
+    # Delete the ZIP file
+    os.remove(zip_path)
+    print(f"Deleted {zip_filename}.")
+
+    # The unzipped folder is the first (and only) folder in the local_folder
+    # (assuming the ZIP contains a single folder)
+    unzipped_folder = None
+    for item in os.listdir(local_folder):
+        item_path = os.path.join(local_folder, item)
+        if os.path.isdir(item_path):
+            unzipped_folder = item_path
+            break
+
+    if unzipped_folder:
+        # Move all files from the unzipped folder to the parent folder
+        for file in os.listdir(unzipped_folder):
+            src = os.path.join(unzipped_folder, file)
+            dst = os.path.join(local_folder, file)
+            shutil.move(src, dst)
+        print(f"Moved files from {os.path.basename(unzipped_folder)} to {local_folder}.")
+
+        # Delete the now-empty unzipped folder
+        os.rmdir(unzipped_folder)
+        print(f"Deleted empty folder {os.path.basename(unzipped_folder)}.")
+    else:
+        print("No unzipped folder found.")
+
+
+
+
+
 ta = "/home/juju/geodata/lidar/lu/lidar2024-ta.gpkg"
 df = gpd.read_file(ta)
 df = dict(zip(df['Fichier'], df['DownloadLink']))
@@ -50,6 +112,7 @@ for x in range(xmin, xmin+size, 500):
         print("do not exist!")
         downl_url = df[code]
         print(downl_url)
+        download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
 
 exit()
 
