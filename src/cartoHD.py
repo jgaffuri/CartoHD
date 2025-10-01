@@ -371,9 +371,15 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, c
         print("dsm slope")
         run_command(["gdaldem", "slope", output_folder+"dsm.tif", output_folder+"slope_dsm.tif", "-s", "1"])
 
+        #compress
+        compress_tiff(output_folder+"slope_dsm.tif")
+
     if override or not os.path.exists(output_folder + "shadow.tif"):
         print("ray shading")
         compute_rayshading(output_folder+"dsm.tif", output_folder+"shadow.tif", light_altitude=15)
+
+        #compress
+        compress_tiff(output_folder+"shadow.tif")
 
     # clean
     if os.path.exists(output_folder + "dsm.tif"):
@@ -424,6 +430,9 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, c
         print("dtm slope")
         run_command(["gdaldem", "slope", output_folder+"dtm_raw.tif", output_folder+"slope_dtm.tif", "-s", "1"])
 
+        #compress
+        compress_tiff(output_folder+"slope_dtm.tif")
+
         #print("dtm building slope")
         #run_command(["gdaldem", "slope", output_folder+"dtm_building.tif", output_folder+"slope_dtm_building.tif", "-s", "1"])
         #os.remove(output_folder+"dtm_building.tif")
@@ -435,6 +444,9 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, c
         print("smooth dtm")
         smooth(output_folder+"dtm.tif", output_folder+"dtm_smoothed.tif", 6)
         #os.remove(output_folder+"dtm.tif")
+
+        #compress
+        compress_tiff(output_folder+"dtm.tif")
 
         print("make contours")
         run_command(["gdal_contour", "-a", "elevation", "-i", "1", output_folder+"dtm_smoothed.tif", "-f", "GPKG", output_folder+"contours.gpkg"])
@@ -487,6 +499,9 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, c
         with open("tmp/p_vegetation.json", "w") as f: json.dump(data, f, indent=3)
         run_command(["pdal", "pipeline", "tmp/p_vegetation.json"])
 
+        #compress
+        compress_tiff(output_folder+"dsm_vegetation.tif")
+
         #print("vegetation slope")
         #run_command(["gdaldem", "slope", output_folder+"dsm_vegetation.tif", output_folder+"slope_vegetation.tif", "-s", "1"])
 
@@ -496,6 +511,8 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, c
         sequential_buffer_tiff(output_folder+"vegetation.tif", output_folder+"vegetation_clean.tif", [-2, 2])
         os.remove(output_folder+"vegetation.tif")
 
+        #compress
+        compress_tiff(output_folder+"vegetation_clean.tif")
 
 
     if override or not os.path.exists(output_folder + "building_simplified.gpkg"):
@@ -536,6 +553,8 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, c
         with open("tmp/p_building.json", "w") as f: json.dump(data, f, indent=3)
         run_command(["pdal", "pipeline", "tmp/p_building.json"])
 
+        #compress
+        compress_tiff(output_folder+"dsm_building.tif")
 
         #print("building slope")
         #run_command(["gdaldem", "slope", output_folder+"dsm_building.tif", output_folder+"slope_building.tif", "-s", "1"])
