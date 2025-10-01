@@ -90,15 +90,15 @@ df = dict(zip(df['Fichier'], df['DownloadLink']))
 
 
 
-def process_tile(xmin, ymin, tile_size, folder):
+def process_tile(xmin, ymin, tile_size, folder, margin=0):
     print(datetime.now(), "process tile", xmin, ymin)
 
     input = folder+"input/"
 
     # check input files
     found = False
-    for x in range(xmin, xmin+tile_size, 500):
-        for y in range(ymin, ymin+tile_size, 500):
+    for x in range(xmin-500, xmin+tile_size+500, 500):
+        for y in range(ymin-500, ymin+tile_size+500, 500):
 
             # get file code
             code = str(x)+"_"+str(y)
@@ -128,7 +128,7 @@ def process_tile(xmin, ymin, tile_size, folder):
 
     # process PDAL tile
     print(datetime.now(), "Processing PDAL tile", xmin, ymin)
-    cartoHDprocess(folder + "input/*.laz", output_folder, bounds = [xmin, xmin+tile_size, ymin, ymin+tile_size], margin=100, case="LU", override=False)
+    cartoHDprocess(folder + "input/*.laz", output_folder, bounds = [xmin, xmin+tile_size, ymin, ymin+tile_size], margin=margin, case="LU", override=False)
 
     #TODO check margin - add crop ?
 
@@ -147,10 +147,11 @@ xmax = 110000
 ymin = 55000
 ymax = 140000
 
+tile_size = 5000
+
 # process LU tile by tile
 tmp_folder = "/home/juju/workspace/CartoHD/tmp/lu/"
-tile_size = 5000
 for x in range(xmin, xmax, tile_size):
     for y in range(ymin, ymax, tile_size):
-        process_tile(x, y, tile_size, tmp_folder)
+        process_tile(x, y, tile_size, tmp_folder, margin=50)
 
