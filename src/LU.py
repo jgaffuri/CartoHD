@@ -130,7 +130,7 @@ def process_tile(xmin, ymin, tile_size, folder):
     print(datetime.now(), "Processing PDAL tile", xmin, ymin)
     cartoHDprocess(folder + "input/*.laz", output_folder, bounds = [xmin, xmin+tile_size, ymin, ymin+tile_size], margin=100, case="LU", override=False)
 
-    #TODO check margin - add crop
+    #TODO check margin - add crop ?
 
     # copy QGIS project file
     if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
