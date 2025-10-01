@@ -167,6 +167,14 @@ def contour_type_field(input_file, layer_name, output_file=None):
 
 
 
+def compress_tiff(file, compress="LZW"):
+    #run_command(["gdalwarp", "-overwrite", "-of", "GTiff", "-co", "COMPRESS=LZW", file, file])
+    run_command(["gdal_translate", "-of", "GTiff", "-co", "COMPRESS="+compress, file, "aaaaahgvhgv.tif"])
+    run_command(["mv", "aaaaahgvhgv.tif", file])
+    # LZW, DEFLATE, ZSTD, JPEG, PACKBITS
+
+
+
 
 
 
@@ -287,25 +295,13 @@ for angle in [10, 20,30,40,50,60]:
 
 
 
-def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
+def cartoHDprocess(input_lidar_data, output_folder, bounds = None, margin = 0, case = None, override = True):
 
     codeBuilding = "1" if case=="BE" else "6"
-
-    process_dsm = True
-    process_dtm = True
-    process_vegetation = True
-    process_building = True
-    compute_dsm_rayshading = True
-    with_pdal_pipeline = True
-
 
     #create necessary folders
     os.makedirs(output_folder, exist_ok=True)
     os.makedirs("tmp/", exist_ok=True)
-
-    # ensure pdal command is available through conda install
-    #if with_pdal_pipeline: run_command(["conda", "activate", "pdal"])
-
 
     def get_base_config():
         # create base pdal config, to be completed for various cases
@@ -314,53 +310,53 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
         "type": "readers.las",
         "filename": input_lidar_data
     }]
-        if bounds: data.append({
-            "type": "filters.crop",
-            "bounds": bounds
-        })
+        if bounds:
+            [xmin, xmax, ymin, ymax] = bounds
+            data.append({
+                "type": "filters.crop",
+                "bounds": "(["+str(xmin-margin)+", "+str(xmax+margin)+"],["+str(ymin-margin)+", "+str(ymax+margin)+"])"
+            })
         return data
 
 
 
 
-    if process_dsm:
+    if override or not os.path.exists(output_folder + "slope_dsm.tif"):
 
-        if with_pdal_pipeline:
-            # prepare PDAL pipeline config
-            print("pipeline DSM")
+        # prepare PDAL pipeline config
+        print("pipeline DSM")
 
-            data = get_base_config()
-            data.extend(
-        [
+        data = get_base_config()
+        data.extend([
             # remove noise
-    {
-        "limits": "Classification![7:7]",
-        "type": "filters.range",
-        "tag": "nonoise"
-    },
-    {
-        "limits": "Classification![60:70]",
-        "type": "filters.range",
-        "tag": "nonoiseFR"
-    },
-        #TODO: remove outlier points ?
-    # keep elevation value
-    {
-        "type": "filters.ferry",
-        "dimensions": "Z=>elevation"
-    },
-    # max value for each 20cm pixel
-    {
-        "type": "writers.gdal",
-        "filename": output_folder+"dsm_raw.tif",
-        "resolution": 0.2,
-        "output_type": "max"
-    }
-    ])
+            {
+                "limits": "Classification![7:7]",
+                "type": "filters.range",
+                "tag": "nonoise"
+            },
+            {
+                "limits": "Classification![60:70]",
+                "type": "filters.range",
+                "tag": "nonoiseFR"
+            },
+            #TODO: remove outlier points ?
+            # keep elevation value
+            {
+                "type": "filters.ferry",
+                "dimensions": "Z=>elevation"
+            },
+            # max value for each 20cm pixel
+            {
+                "type": "writers.gdal",
+                "filename": output_folder+"dsm_raw.tif",
+                "resolution": 0.2,
+                "output_type": "max"
+            }
+        ])
 
-            # execute PDAL pipeline
-            with open("tmp/p_dsm.json", "w") as f: json.dump(data, f, indent=3)
-            run_command(["pdal", "pipeline", "tmp/p_dsm.json"])
+        # execute PDAL pipeline
+        with open("tmp/p_dsm.json", "w") as f: json.dump(data, f, indent=3)
+        run_command(["pdal", "pipeline", "tmp/p_dsm.json"])
 
         print("fill dsm no data")
         #TODO: should not be linear
@@ -371,62 +367,66 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
         #print("dsm hillshading")
         #run_command(["gdaldem", "hillshade", output_folder+"dsm.tif", output_folder+"hillshade_dsm.tif", "-z", "1", "-s", "1", "-az", "315", "-alt", "45"])
 
+    if override or not os.path.exists(output_folder + "slope_dsm.tif"):
         print("dsm slope")
         run_command(["gdaldem", "slope", output_folder+"dsm.tif", output_folder+"slope_dsm.tif", "-s", "1"])
 
-        if compute_dsm_rayshading:
-            print("ray shading")
-            compute_rayshading(output_folder+"dsm.tif", output_folder+"shadow.tif", light_altitude=15)
+    if override or not os.path.exists(output_folder + "shadow.tif"):
+        print("ray shading")
+        compute_rayshading(output_folder+"dsm.tif", output_folder+"shadow.tif", light_altitude=15)
 
-    if process_dtm:
+    # clean
+    if os.path.exists(output_folder + "dsm.tif"):
+        os.remove(output_folder+"dsm.tif")
 
-        if with_pdal_pipeline:
-            # prepare PDAL pipeline config
-            print("pipeline DTM")
 
-            data = get_base_config()
-            data.extend([
+    if override or not os.path.exists(output_folder + "contours.gpkg"):
 
-    {
-        # keep one ground and building
-        "type": "filters.range",
-        "limits": "Classification[2:2],Classification["+codeBuilding+":"+codeBuilding+"]"
-    },
-    {
-        "type": "writers.gdal",
-        "filename": output_folder+"dtm_building.tif",
-        "resolution": 0.2,
-        "output_type": "min"
-    },
-    {
-        "type": "filters.range",
-        #keep only ground
-        "limits": "Classification[2:2]"
-    },
-    {
-        #keep only elevation
-        "type": "filters.ferry",
-        "dimensions": "Z=>elevation"
-    },
-    {
-        #keep min, 20 centimeter resolution
-        "type": "writers.gdal",
-        "filename": output_folder+"dtm_raw.tif",
-        "resolution": 0.2,
-        "output_type": "min"
-    }
-    ])
+        # prepare PDAL pipeline config
+        print("pipeline DTM")
 
-            # execute PDAL pipeline
-            with open("tmp/p_dtm.json", "w") as f: json.dump(data, f, indent=3)
-            run_command(["pdal", "pipeline", "tmp/p_dtm.json"])
+        data = get_base_config()
+        data.extend([
+            {
+                # keep one ground and building
+                "type": "filters.range",
+                "limits": "Classification[2:2],Classification["+codeBuilding+":"+codeBuilding+"]"
+            },
+            #{
+            #    "type": "writers.gdal",
+            #    "filename": output_folder+"dtm_building.tif",
+            #    "resolution": 0.2,
+            #    "output_type": "min"
+            #},
+            {
+                "type": "filters.range",
+                #keep only ground
+                "limits": "Classification[2:2]"
+            },
+            {
+                #keep only elevation
+                "type": "filters.ferry",
+                "dimensions": "Z=>elevation"
+            },
+            {
+                #keep min, 20 centimeter resolution
+                "type": "writers.gdal",
+                "filename": output_folder+"dtm_raw.tif",
+                "resolution": 0.2,
+                "output_type": "min"
+            }
+        ])
 
+        # execute PDAL pipeline
+        with open("tmp/p_dtm.json", "w") as f: json.dump(data, f, indent=3)
+        run_command(["pdal", "pipeline", "tmp/p_dtm.json"])
 
         print("dtm slope")
         run_command(["gdaldem", "slope", output_folder+"dtm_raw.tif", output_folder+"slope_dtm.tif", "-s", "1"])
 
-        print("dtm building slope")
-        run_command(["gdaldem", "slope", output_folder+"dtm_building.tif", output_folder+"slope_dtm_building.tif", "-s", "1"])
+        #print("dtm building slope")
+        #run_command(["gdaldem", "slope", output_folder+"dtm_building.tif", output_folder+"slope_dtm_building.tif", "-s", "1"])
+        #os.remove(output_folder+"dtm_building.tif")
 
         print("fill dtm no data")
         run_command(["gdal_fillnodata.py", "-md", "50", "-of", "GTiff", output_folder+"dtm_raw.tif", output_folder+"dtm.tif"])
@@ -443,50 +443,49 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
         print("set contours type")
         contour_type_field(output_folder+"contours.gpkg", "contour")
 
-    if process_vegetation:
+    if override or not os.path.exists(output_folder + "vegetation_clean.tif"):
 
-        if with_pdal_pipeline:
-            # prepare PDAL pipeline config
-            print("pipeline vegetation")
+        # prepare PDAL pipeline config
+        print("pipeline vegetation")
 
-            data = get_base_config()
-            data.extend([
-        {
-            #keep only vegetation
-            "type": "filters.range",
-            "limits": "Classification[3:5]"
-        },
-
-
-        # still necessary ?
-        {
-            "type": "filters.ferry",
-            "dimensions": "Z=>elevation"
-        },
-        {
-            "type": "writers.gdal",
-            "filename": output_folder+"dsm_vegetation.tif",
-            "resolution": 0.2,
-            "output_type": "max"
-        },
+        data = get_base_config()
+        data.extend([
+            {
+                #keep only vegetation
+                "type": "filters.range",
+                "limits": "Classification[3:5]"
+            },
 
 
-        {
-            "type": "filters.assign",
-            "assignment": "Z[:]=1"
-        },
-        {
-            "type": "writers.gdal",
-            "filename": output_folder+"vegetation.tif",
-            "dimension": "Z",
-            "output_type": "max",
-            "resolution": 0.2
-        }
-    ])
+            # still necessary ?
+            {
+                "type": "filters.ferry",
+                "dimensions": "Z=>elevation"
+            },
+            {
+                "type": "writers.gdal",
+                "filename": output_folder+"dsm_vegetation.tif",
+                "resolution": 0.2,
+                "output_type": "max"
+            },
 
-            # execute PDAL pipeline
-            with open("tmp/p_vegetation.json", "w") as f: json.dump(data, f, indent=3)
-            run_command(["pdal", "pipeline", "tmp/p_vegetation.json"])
+
+            {
+                "type": "filters.assign",
+                "assignment": "Z[:]=1"
+            },
+            {
+                "type": "writers.gdal",
+                "filename": output_folder+"vegetation.tif",
+                "dimension": "Z",
+                "output_type": "max",
+                "resolution": 0.2
+            }
+        ])
+
+        # execute PDAL pipeline
+        with open("tmp/p_vegetation.json", "w") as f: json.dump(data, f, indent=3)
+        run_command(["pdal", "pipeline", "tmp/p_vegetation.json"])
 
         #print("vegetation slope")
         #run_command(["gdaldem", "slope", output_folder+"dsm_vegetation.tif", output_folder+"slope_vegetation.tif", "-s", "1"])
@@ -497,44 +496,45 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
         sequential_buffer_tiff(output_folder+"vegetation.tif", output_folder+"vegetation_clean.tif", [-2, 2])
         os.remove(output_folder+"vegetation.tif")
 
-    if process_building:
 
-        if with_pdal_pipeline:
-            # prepare PDAL pipeline config
-            print("pipeline building")
 
-            data = get_base_config()
-            data.extend([
-        {
-            "type": "filters.range",
-            "limits": "Classification["+codeBuilding+":"+codeBuilding+"]"
-        },
-        {
-            "type": "filters.ferry",
-            "dimensions": "Z=>elevation"
-        },
-        {
-            "type": "writers.gdal",
-            "filename": output_folder+"dsm_building.tif",
-            "resolution": 0.2,
-            "output_type": "max"
-        },
-        {
-            "type": "filters.assign",
-            "assignment": "Z[:]=1"
-        },
-        {
-            "type": "writers.gdal",
-            "filename": output_folder+"building.tif",
-            "dimension": "Z",
-            "output_type": "max",
-            "resolution": 0.2
-        }
-    ])
+    if override or not os.path.exists(output_folder + "building_simplified.gpkg"):
 
-            # execute PDAL pipeline
-            with open("tmp/p_building.json", "w") as f: json.dump(data, f, indent=3)
-            run_command(["pdal", "pipeline", "tmp/p_building.json"])
+        # prepare PDAL pipeline config
+        print("pipeline building")
+
+        data = get_base_config()
+        data.extend([
+            {
+                "type": "filters.range",
+                "limits": "Classification["+codeBuilding+":"+codeBuilding+"]"
+            },
+            {
+                "type": "filters.ferry",
+                "dimensions": "Z=>elevation"
+            },
+            {
+                "type": "writers.gdal",
+                "filename": output_folder+"dsm_building.tif",
+                "resolution": 0.2,
+                "output_type": "max"
+            },
+            {
+                "type": "filters.assign",
+                "assignment": "Z[:]=1"
+            },
+            {
+                "type": "writers.gdal",
+                "filename": output_folder+"building.tif",
+                "dimension": "Z",
+                "output_type": "max",
+                "resolution": 0.2
+            }
+        ])
+
+        # execute PDAL pipeline
+        with open("tmp/p_building.json", "w") as f: json.dump(data, f, indent=3)
+        run_command(["pdal", "pipeline", "tmp/p_building.json"])
 
 
         #print("building slope")
@@ -543,7 +543,6 @@ def cartoHDprocess(input_lidar_data, output_folder, bounds = None, case = None):
         print("clean building.tif")
         sequential_buffer_tiff(output_folder+"building.tif", output_folder+"building_clean.tif", [3, -3])
         os.remove(output_folder+"building.tif")
-
 
         print("vectorise")
         run_command(["gdal_polygonize.py", "-overwrite", output_folder+"building_clean.tif", "-f", "GPKG", output_folder+"building.gpkg"])

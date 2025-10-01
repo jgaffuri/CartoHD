@@ -83,7 +83,7 @@ def download_unzip_and_cleanup(zip_url, local_folder):
 
 
 
-ta = "/home/juju/geodata/lidar/lu/lidar2024-ta.gpkg"
+ta = "/home/juju/geodata/LU/lidar/lidar2024-ta.gpkg"
 df = gpd.read_file(ta)
 df = dict(zip(df['Fichier'], df['DownloadLink']))
 #83500_82500 : https://data.public.lu/fr/datasets/r/a1b312e3-ed02-4a27-bb73-5276417d8a7a
@@ -92,11 +92,6 @@ df = dict(zip(df['Fichier'], df['DownloadLink']))
 
 def process_tile(xmin, ymin, tile_size, folder):
     print(datetime.now(), "process tile", xmin, ymin)
-
-    output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
-    if os.path.exists(output_folder):
-        print(datetime.now(), "output already produced")
-        return
 
     input = folder+"input/"
 
@@ -128,13 +123,14 @@ def process_tile(xmin, ymin, tile_size, folder):
         return
 
     # make output folder
+    output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
     os.makedirs(output_folder, exist_ok=True)
 
     # process PDAL tile
-    if not os.path.exists(output_folder + "dsm.tif"):
-        print(datetime.now(), "Processing PDAL tile", xmin, ymin)
-        bounds = "(["+str(xmin)+", "+str(xmin+tile_size)+"],["+str(ymin)+", "+str(ymin+tile_size)+"])"
-        cartoHDprocess(folder + "input/*.laz", output_folder, bounds = bounds, case="LU")
+    print(datetime.now(), "Processing PDAL tile", xmin, ymin)
+    cartoHDprocess(folder + "input/*.laz", output_folder, bounds = [xmin, xmin+tile_size, ymin, ymin+tile_size], margin=50, case="LU", override=False)
+
+    #TODO check margin - add crop
 
     # copy QGIS project file
     if not os.path.exists(output_folder + "project_LU_bulk.qgz"):
