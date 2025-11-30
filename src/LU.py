@@ -93,7 +93,7 @@ df = dict(zip(df['Fichier'], df['DownloadLink']))
 def process_tile(xmin, ymin, tile_size, folder, margin=0):
     print(datetime.now(), "process tile", xmin, ymin)
 
-    input = folder+"input/"
+    inp = folder+"input/"
 
     # check input files
     found = False
@@ -104,18 +104,18 @@ def process_tile(xmin, ymin, tile_size, folder, margin=0):
             code = str(x)+"_"+str(y)
 
             # file already downloaded
-            if os.path.exists(input + code + ".laz"):
+            if os.path.exists(inp + code + ".laz"):
                 found = True
                 continue
 
             # no file to download for this code: continue
-            if not code in df: continue
+            if code not in df: continue
 
             # get file URL
             downl_url = df[code]
 
             # download and unzip file
-            download_unzip_and_cleanup(zip_url = downl_url, local_folder=input)
+            download_unzip_and_cleanup(zip_url = downl_url, local_folder=inp)
             found = True
 
     if not found:
