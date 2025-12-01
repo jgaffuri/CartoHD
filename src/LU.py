@@ -153,5 +153,7 @@ tile_size = 5000
 tmp_folder = "/home/juju/workspace/CartoHD/tmp/lu/"
 for x in range(xmin, xmax, tile_size):
     for y in range(ymin, ymax, tile_size):
-        process_tile(x, y, tile_size, tmp_folder, margin=50)
-
+        try:
+            process_tile(x, y, tile_size, tmp_folder, margin=50)
+        except:
+            print("Failed processing tile", x, y)
