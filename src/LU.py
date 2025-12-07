@@ -124,6 +124,9 @@ def process_tile(xmin, ymin, tile_size, folder, margin=0):
 
     # make output folder
     output_folder = folder + "output/" + str(xmin) + "_" + str(ymin) + "/"
+    if os.path.isdir(output_folder):
+        print("Filder", str(xmin) + "_" + str(ymin), "already created: skip.")
+        return
     os.makedirs(output_folder, exist_ok=True)
 
     # process PDAL tile
