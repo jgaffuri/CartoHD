@@ -22,16 +22,14 @@ import os
 '''
 
 
-
-
 idf = "/home/juju/geodata/lidar/"
-for f in ["wam2025"]:
+for f in ["keremma"]:
     print(f)
 
     print("download")
     os.makedirs(idf+f+"/", exist_ok=True)
     #if f != "carcassonne":
-    run_command(["wget", "-i", idf+f+".txt", "-nc", "-P", idf+f+"/"])
+    #run_command(["wget", "-i", idf+f+".txt", "-nc", "-P", idf+f+"/"])
 
     input_lidar_data = idf+f+"/*.laz"
     output_folder = "/home/juju/lidar_mapping/"+f+"/"
