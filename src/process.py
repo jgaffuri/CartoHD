@@ -23,7 +23,7 @@ import os
 
 
 idf = "/home/juju/geodata/lidar/"
-for f in ["keremma"]:
+for f in ["niederanven"]:
     print(f)
 
     print("download")
@@ -39,5 +39,5 @@ for f in ["keremma"]:
     cartoHDprocess(input_lidar_data, output_folder, bounds = bounds, case="FR")
 
     print("copy QGIS project file")
-    run_command(["cp", "src/project_FR.qgz", output_folder])
+    run_command(["cp", "src/project_LU.qgz", output_folder])
 
