@@ -40,4 +40,3 @@ for f in ["niederanven"]:
 
     print("copy QGIS project file")
     run_command(["cp", "src/project_LU.qgz", output_folder])
-
